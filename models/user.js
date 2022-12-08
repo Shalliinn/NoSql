@@ -41,7 +41,14 @@ userSchema.methods.addToCart=function(product){
   return this.save();
 
 }
-module.exports=mongoose.model('User',userSchema)
+userSchema.methods.removeFromCart=function(productId){
+      const updatedCartitems=this.cart.items.filter(item=>{
+  return item.productId.toString()!== productId.toString();
+      })
+      this.cart.items=updatedCartitems;
+      return this.save();
+    }
+  module.exports=mongoose.model('User',userSchema)
 // const getDb=require('../util/database').getDb
 // const mongodb=require('mongodb')
 // const ObjectId=mongodb.ObjectId;
