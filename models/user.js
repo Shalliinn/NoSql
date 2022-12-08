@@ -48,6 +48,37 @@ return db.collection('users')
   console.log(err);
 })
   } 
+
+  getCart(){
+  const db=getDb();
+  const productIds=this.cart.items.map(i=>{
+    return i.productId;
+  })
+  return db.collection('products')
+  .find({_id:{$in:productIds}})
+  .toArray()
+  .then(products=>{
+    console.log(products,'....61');
+    return products.map(p=>{
+      return {...p,quantity:this.cart.items.find(i=>{
+        return i.productId.toString()===p._id.toString();
+      }).quantity
+    }
+    })
+  })
+  }
+  deleteitemFromCart(productId){
+    const updatedCartitems=this.cart.items.filter(item=>{
+return item.productId.toString()!== productId.toString();
+    })
+    const db=getDb();
+return db
+.collection('users')
+.updateOne(
+  {_id:new ObjectId(this._id)},
+  {$set:{cart:{items:updatedCartitems}}}
+)
+  }
 }
 
 module.exports = User;
