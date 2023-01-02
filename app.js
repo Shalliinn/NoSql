@@ -1,51 +1,43 @@
-const path = require('path');
-
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose=require('mongoose')
-const errorController = require('./controllers/error');
-//const mongoConnect = require('./util/database').mongoConnect;
+const express=require('express');
+const cookieParser=require('cookie-parser');
+const csrf=require('csurf')
+const csrfProtection=csrf({cookie:true})
+const bodyParser=require('body-parser');
+const sequelize=require('./util/database')
+const app=express();
+var parseForm=bodyParser.urlencoded({extended:false})
+var cors=require('cors');
+app.use(cookieParser())
+//const adminRoutes=require('./routes/admin')
 const User=require('./models/user')
-const app = express();
+//app.use(cors());
 
-app.set('view engine', 'ejs');
-app.set('views', 'views');
-
-const adminRoutes = require('./routes/admin');
-const shopRoutes = require('./routes/shop');
-
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use((req, res, next) => {
-  User.findById('63916f4df7e01c5e54aa1f13')
-    .then(user => {
-      req.user =user;
-      next();
-    })
-    .catch(err => console.log(err));
-});
-
-app.use('/admin', adminRoutes);
-app.use(shopRoutes);
-
-app.use(errorController.get404);
-mongoose
-.connect('mongodb+srv://shalin:shalin1234@cluster0.oqumu6f.mongodb.net/shop?retryWrites=true&w=majority')
-.then(result=>{
-  User.findOne().then(user=>{
-    if(!user){
-      const user=new User({
-        name:"shalin",
-        email:"shalin1234",
-        cart:{
-          items:[]
-        }
-      })
-      user.save()
-    }
-  })
-  
-  app.listen(3000)
+//console.log('11');
+app.get('/form',csrfProtection,function (req,res){
+  console.log('10');
+  res.send({csrfToken:req.csrfToken()})
 })
-.catch(err=>console.log(err))
+app.post('/process',parseForm,csrfProtection,function (req,res){
+  res.send('data is being processed')
+  console.log(req.body);
+  User.create({
+    name:req.body.name,
+    email:req.body.email,
+    phoneNumber:req.body.phoneNumber
+})
+.then(()=>{
+  res.status(200)
+})
+.catch((err)=>{
+  console.log(err);
+})
+
+})
+//app.use(adminRoutes);
+
+sequelize.sync()
+.then(result=>{
+  app.listen(3000)
+ }).catch(err=>{
+  console.log(err)
+})
